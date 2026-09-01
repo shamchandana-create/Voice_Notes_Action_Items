@@ -7,13 +7,13 @@ from openai import OpenAI
 # -----------------------------
 # Page Configuration
 # -----------------------------
-
 st.set_page_config(
     page_title="Voice Notes → Action Items",
     page_icon="🎙️"
 )
 
 st.title("🎙️ Voice Notes → Action Items")
+
 st.write(
     "Upload a voice note and automatically generate a transcript, "
     "summary, and action items."
@@ -22,17 +22,16 @@ st.write(
 # -----------------------------
 # Load Whisper
 # -----------------------------
-
 @st.cache_resource
 def load_whisper_model():
     return whisper.load_model("base")
+
 
 model = load_whisper_model()
 
 # -----------------------------
 # Upload Audio
 # -----------------------------
-
 uploaded_file = st.file_uploader(
     "Upload your audio file",
     type=["mp3", "wav", "m4a", "mp4"]
@@ -41,9 +40,7 @@ uploaded_file = st.file_uploader(
 # -----------------------------
 # Process Audio
 # -----------------------------
-
 if uploaded_file:
-
     st.audio(uploaded_file)
 
     if st.button("🚀 Process Voice Note"):
@@ -62,11 +59,9 @@ if uploaded_file:
             # -----------------------------
             # Speech to Text
             # -----------------------------
-
             with st.spinner("🎙️ Converting speech to text..."):
 
                 result = model.transcribe(audio_path)
-
                 transcript = result["text"].strip()
 
             st.success("✅ Transcription completed!")
@@ -74,15 +69,12 @@ if uploaded_file:
             # -----------------------------
             # Display Transcript
             # -----------------------------
-
             st.subheader("📝 Transcript")
-
             st.write(transcript)
 
             # -----------------------------
-            # Send Transcript to Ollama
+            # AI Analysis
             # -----------------------------
-
             with st.spinner("🤖 Generating summary and action items..."):
 
                 prompt = f"""
@@ -95,43 +87,39 @@ Analyze the following transcript:
 Return your answer using EXACTLY this structure:
 
 SUMMARY:
+
 Write a short 1-2 sentence summary.
 
 ACTION ITEMS:
+
 1. First action item
+
 2. Second action item
+
 3. Third action item
 
 DEADLINES:
+
 Mention any deadlines found in the transcript.
 If there is no deadline, write "No specific deadline mentioned."
 """
 
-                from openai import OpenAI
+                client = OpenAI(
+                    api_key=st.secrets["OPENAI_API_KEY"]
+                )
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+                response = client.responses.create(
+                    model="gpt-4o-mini",
+                    input=prompt
+                )
 
-response = client.responses.create(
-    model="gpt-4o-mini",
-    input=prompt
-)
+                ai_result = response.output_text
 
-ai_result = response.output_text
-
-                    # -----------------------------
-                    # Display AI Result
-                    # -----------------------------
-
-                    st.subheader("🤖 AI Analysis")
-
-                    st.write(ai_result)
-
-                else:
-
-                    st.error(
-                        "Ollama could not generate the analysis. "
-                        "Make sure Ollama is running."
-                    )
+            # -----------------------------
+            # Display AI Result
+            # -----------------------------
+            st.subheader("🤖 AI Analysis")
+            st.write(ai_result)
 
         except Exception as e:
 
