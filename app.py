@@ -2,7 +2,7 @@ import streamlit as st
 import whisper
 import tempfile
 import os
-import requests
+from openai import OpenAI
 
 # -----------------------------
 # Page Configuration
@@ -107,18 +107,16 @@ Mention any deadlines found in the transcript.
 If there is no deadline, write "No specific deadline mentioned."
 """
 
-                response = requests.post(
-                    "http://localhost:11434/api/generate",
-                    json={
-                        "model": "llama3.2:3b",
-                        "prompt": prompt,
-                        "stream": False
-                    }
-                )
+                from openai import OpenAI
 
-                if response.status_code == 200:
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-                    ai_result = response.json()["response"]
+response = client.responses.create(
+    model="gpt-4o-mini",
+    input=prompt
+)
+
+ai_result = response.output_text
 
                     # -----------------------------
                     # Display AI Result
